@@ -32,6 +32,7 @@
 #include "kpty_p.h"
 
 #include <QIODevice>
+#include <list>  // 替换 QLinkedList
 
 #define KMAXINT ((int)(~0U >> 1))
 
@@ -168,7 +169,6 @@ private:
 /////////////////////////////////////////////////////
 
 #include <QByteArray>
-#include <QLinkedList>
 
 #define CHUNKSIZE 4096
 
@@ -185,14 +185,14 @@ public:
         buffers.clear();
         QByteArray tmp;
         tmp.resize(CHUNKSIZE);
-        buffers << tmp;
+        buffers.push_back(tmp);
         head = tail = 0;
         totalSize = 0;
     }
 
     inline bool isEmpty() const
     {
-        return buffers.count() == 1 && !tail;
+        return buffers.size() == 1 && !tail;
     }
 
     inline int size() const
@@ -202,13 +202,13 @@ public:
 
     inline int readSize() const
     {
-        return (buffers.count() == 1 ? tail : buffers.first().size()) - head;
+        return (buffers.size() == 1 ? tail : buffers.front().size()) - head;
     }
 
     inline const char *readPointer() const
     {
         Q_ASSERT(totalSize > 0);
-        return buffers.first().constData() + head;
+        return buffers.front().constData() + head;
     }
 
     void free(int bytes)
@@ -216,26 +216,26 @@ public:
         totalSize -= bytes;
         Q_ASSERT(totalSize >= 0);
 
-        forever {
+        while (true) {
             int nbs = readSize();
 
             if (bytes < nbs) {
                 head += bytes;
-                if (head == tail && buffers.count() == 1) {
-                    buffers.first().resize(CHUNKSIZE);
+                if (head == tail && buffers.size() == 1) {
+                    buffers.front().resize(CHUNKSIZE);
                     head = tail = 0;
                 }
                 break;
             }
 
             bytes -= nbs;
-            if (buffers.count() == 1) {
-                buffers.first().resize(CHUNKSIZE);
+            if (buffers.size() == 1) {
+                buffers.front().resize(CHUNKSIZE);
                 head = tail = 0;
                 break;
             }
 
-            buffers.removeFirst();
+            buffers.pop_front();
             head = 0;
         }
     }
@@ -245,15 +245,15 @@ public:
         totalSize += bytes;
 
         char *ptr;
-        if (tail + bytes <= buffers.last().size()) {
-            ptr = buffers.last().data() + tail;
+        if (tail + bytes <= buffers.back().size()) {
+            ptr = buffers.back().data() + tail;
             tail += bytes;
         } else {
-            buffers.last().resize(tail);
+            buffers.back().resize(tail);
             QByteArray tmp;
             tmp.resize(qMax(CHUNKSIZE, bytes));
             ptr = tmp.data();
-            buffers << tmp;
+            buffers.push_back(tmp);
             tail = bytes;
         }
         return ptr;
@@ -278,8 +278,8 @@ public:
     {
         int index = 0;
         int start = head;
-        QLinkedList<QByteArray>::ConstIterator it = buffers.constBegin();
-        forever {
+        std::list<QByteArray>::const_iterator it = buffers.begin();
+        while (it != buffers.end()) {
             if (!maxLength)
                 return index;
             if (index == size())
@@ -295,6 +295,7 @@ public:
             maxLength -= len;
             start = 0;
         }
+        return -1;
     }
 
     inline int lineSize(int maxLength = KMAXINT) const
@@ -327,7 +328,7 @@ public:
     }
 
 private:
-    QLinkedList<QByteArray> buffers;
+    std::list<QByteArray> buffers;  // 使用 std::list 替换 QLinkedList
     int head, tail;
     int totalSize;
 };
@@ -358,4 +359,3 @@ struct KPtyDevicePrivate : public KPtyPrivate {
 };
 
 #endif
-

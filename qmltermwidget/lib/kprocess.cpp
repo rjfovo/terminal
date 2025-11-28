@@ -29,7 +29,7 @@
 
 #include "kprocess.h"
 
-#include <qfile.h>
+#include <QFile>
 
 #ifdef Q_OS_WIN
 # include <windows.h>
@@ -131,17 +131,17 @@ void KProcess::setOutputChannelMode(OutputChannelMode mode)
     Q_D(KProcess);
 
     d->outputChannelMode = mode;
-    disconnect(this, SIGNAL(readyReadStandardOutput()));
-    disconnect(this, SIGNAL(readyReadStandardError()));
+    disconnect(this, &KProcess::readyReadStandardOutput, this, &KProcess::_k_forwardStdout);
+    disconnect(this, &KProcess::readyReadStandardError, this, &KProcess::_k_forwardStderr);
     switch (mode) {
     case OnlyStdoutChannel:
-        connect(this, SIGNAL(readyReadStandardError()), SLOT(_k_forwardStderr()));
+        connect(this, &KProcess::readyReadStandardError, this, &KProcess::_k_forwardStderr);
         break;
     case OnlyStderrChannel:
-        connect(this, SIGNAL(readyReadStandardOutput()), SLOT(_k_forwardStdout()));
+        connect(this, &KProcess::readyReadStandardOutput, this, &KProcess::_k_forwardStdout);
         break;
     default:
-        QProcess::setProcessChannelMode((ProcessChannelMode)mode);
+        QProcess::setProcessChannelMode(static_cast<QProcess::ProcessChannelMode>(mode));
         return;
     }
     QProcess::setProcessChannelMode(QProcess::SeparateChannels);
@@ -410,3 +410,15 @@ int KProcess::pid() const
 #endif
 }
 
+// Implement the private slots
+void KProcess::_k_forwardStdout()
+{
+    Q_D(KProcess);
+    d->_k_forwardStdout();
+}
+
+void KProcess::_k_forwardStderr()
+{
+    Q_D(KProcess);
+    d->_k_forwardStderr();
+}

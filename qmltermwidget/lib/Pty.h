@@ -70,13 +70,13 @@ Q_OBJECT
      * To start the terminal process, call the run() method with the
      * name of the program to start and appropriate arguments.
      */
-    explicit Pty(QObject* parent = 0);
+    explicit Pty(QObject* parent = nullptr);
 
     /**
      * Construct a process using an open pty master.
      * See KPtyProcess::KPtyProcess()
      */
-    explicit Pty(int ptyMasterFd, QObject* parent = 0);
+    explicit Pty(int ptyMasterFd, QObject* parent = nullptr);
 
     ~Pty();
 
@@ -188,15 +188,15 @@ Q_OBJECT
      */
     void receivedData(const char* buffer, int length);
 
-  protected:
-      void setupChildProcess();
-
   private slots:
     // called when data is received from the terminal process
     void dataReceived();
 
   private:
       void init();
+
+      // 私有方法，用于设置子进程的信号处理
+      void setupChildProcessLogic();
 
     // takes a list of key=value pairs and adds them
     // to the environment for the process

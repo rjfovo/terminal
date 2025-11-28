@@ -661,6 +661,7 @@ protected:
     //     - Part of a word (returns 'a')
     //     - Other characters (returns the input character)
     QChar charClass(QChar ch) const;
+    QChar charClass(wchar_t wch) const;
 
     void clearImage();
 

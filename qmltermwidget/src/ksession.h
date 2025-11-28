@@ -24,6 +24,8 @@
 #define KSESSION_H
 
 #include <QObject>
+#include <QString>
+#include <QStringList>
 
 // Konsole
 #include "Session.h"
@@ -65,8 +67,8 @@ public:
     void setInitialWorkingDirectory(const QString & dir);
     QString getInitialWorkingDirectory();
 
-    //Text codec, default is UTF-8
-    void setTextCodec(QTextCodec * codec);
+    // Text codec - 在 Qt6 中 QTextCodec 已被移除
+    // void setTextCodec(QTextCodec * codec); // 这行已被注释掉
 
     // History size for scrolling
     void setHistorySize(int lines); //infinite if lines < 0

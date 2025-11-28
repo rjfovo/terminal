@@ -45,7 +45,6 @@
 // Qt
 #include <QEvent>
 #include <QKeyEvent>
-#include <QByteRef>
 
 // KDE
 //#include <kdebug.h>
@@ -88,7 +87,7 @@ void Vt102Emulation::reset()
   _screen[0]->reset();
   resetCharset(1);
   _screen[1]->reset();
-  setCodec(LocaleCodec);
+  setEncoding(LocaleCodec);
 
   bufferedUpdate();
 }
@@ -419,7 +418,7 @@ void Vt102Emulation::processWindowAttributeChange()
   QString newValue;
   newValue.reserve(tokenBufferPos-i-2);
   for (int j = 0; j < tokenBufferPos-i-2; j++)
-    newValue[j] = tokenBuffer[i+1+j];
+    newValue[j] = QChar(static_cast<ushort>(tokenBuffer[i+1+j]));
 
   _pendingTitleUpdates[attributeToChange] = newValue;
   _titleUpdateTimer->start(20);
@@ -530,8 +529,8 @@ void Vt102Emulation::processToken(int token, wchar_t p, int q)
     case TY_ESC_CS('+', 'A') :      setCharset           (3,    'A'); break; //VT100
     case TY_ESC_CS('+', 'B') :      setCharset           (3,    'B'); break; //VT100
 
-    case TY_ESC_CS('%', 'G') :      setCodec             (Utf8Codec   ); break; //LINUX
-    case TY_ESC_CS('%', '@') :      setCodec             (LocaleCodec ); break; //LINUX
+    case TY_ESC_CS('%', 'G') :      setEncoding          (Utf8Codec   ); break; //LINUX
+    case TY_ESC_CS('%', '@') :      setEncoding          (LocaleCodec ); break; //LINUX
 
     case TY_ESC_DE('3'      ) : /* Double height line, top half    */
                                 _currentScreen->setLineProperty( LINE_DOUBLEWIDTH , true );
@@ -964,8 +963,8 @@ void Vt102Emulation::sendMouseEvent( int cb, int cx, int cy , int eventType )
             // coordinate+32, no matter what the locale is. We could easily
             // convert manually, but QString can also do it for us.
             QChar coords[2];
-            coords[0] = cx + 0x20;
-            coords[1] = cy + 0x20;
+            coords[0] = QChar(static_cast<ushort>(cx + 0x20));
+            coords[1] = QChar(static_cast<ushort>(cy + 0x20));
             QString coordsStr = QString(coords, 2);
             QByteArray utf8 = coordsStr.toUtf8();
             snprintf(command, sizeof(command), "\033[M%c%s", cb + 0x20, utf8.constData());
@@ -1245,7 +1244,7 @@ void Vt102Emulation::sendKeyEvent( QKeyEvent* origEvent )
             textToSend += "\033[6~";
         }
         else {
-            textToSend += _codec->fromUnicode(event->text());
+            textToSend += event->text().toUtf8();
         }
 
         sendData( textToSend.constData() , textToSend.length() );
@@ -1527,4 +1526,3 @@ void Vt102Emulation::reportDecodingError()
 }
 
 //#include "Vt102Emulation.moc"
-

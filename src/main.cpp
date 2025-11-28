@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <QApplication>
+#include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QLocale>
@@ -31,9 +31,8 @@
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps, true);
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling, true);
-    QApplication app(argc, argv);
+    // Qt6中高DPI支持通常是自动的，移除已弃用的属性设置
+    QGuiApplication app(argc, argv);
     app.setOrganizationName("cutefishos");
     app.setWindowIcon(QIcon::fromTheme("terminal"));
 

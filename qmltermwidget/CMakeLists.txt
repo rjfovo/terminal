@@ -1,6 +1,7 @@
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR} lib src
 )
+
 add_definitions(-DHAVE_POSIX_OPENPT -DHAVE_SYS_TIME_H)
 
 set(TERMWIDGET_SRCS
@@ -34,6 +35,7 @@ set(TERMWIDGET_SRCS
     lib/tools.h
     lib/Vt102Emulation.h
     lib/mac-vkcode.h
+
     lib/BlockArray.cpp
     lib/ColorScheme.cpp
     lib/Emulation.cpp
@@ -56,6 +58,7 @@ set(TERMWIDGET_SRCS
     lib/TerminalDisplay.cpp
     lib/tools.cpp
     lib/Vt102Emulation.cpp
+
     src/ksession.h
     src/qmltermwidget_plugin.h
     src/ksession.cpp
@@ -67,14 +70,33 @@ add_library(cutefishqmltermwidget MODULE
 )
 
 target_link_libraries(cutefishqmltermwidget
-    Qt5::Core
-    Qt5::Quick
-    Qt5::Gui
-    Qt5::Widgets
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Quick
+    Qt6::Widgets
 )
 
-install(TARGETS cutefishqmltermwidget DESTINATION ${INSTALL_QMLDIR}/Cutefish/TermWidget)
-install(FILES src/qmldir DESTINATION ${INSTALL_QMLDIR}/Cutefish/TermWidget)
-install(FILES src/QMLTermScrollbar.qml DESTINATION ${INSTALL_QMLDIR}/Cutefish/TermWidget)
-install(DIRECTORY lib/color-schemes DESTINATION ${INSTALL_QMLDIR}/Cutefish/TermWidget)
-install(DIRECTORY lib/kb-layouts DESTINATION ${INSTALL_QMLDIR}/Cutefish/TermWidget)
+# Qt6 QML install path
+if(NOT QT_QML_DIR)
+    get_target_property(QT_QML_DIR Qt6::Core QT_INSTALL_QML)
+endif()
+
+install(TARGETS cutefishqmltermwidget
+    DESTINATION ${QT_QML_DIR}/Cutefish/TermWidget
+)
+
+install(FILES src/qmldir
+    DESTINATION ${QT_QML_DIR}/Cutefish/TermWidget
+)
+
+install(FILES src/QMLTermScrollbar.qml
+    DESTINATION ${QT_QML_DIR}/Cutefish/TermWidget
+)
+
+install(DIRECTORY lib/color-schemes
+    DESTINATION ${QT_QML_DIR}/Cutefish/TermWidget
+)
+
+install(DIRECTORY lib/kb-layouts
+    DESTINATION ${QT_QML_DIR}/Cutefish/TermWidget
+)

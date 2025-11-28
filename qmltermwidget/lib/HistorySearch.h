@@ -17,11 +17,14 @@
     02110-1301  USA.
 */
 #ifndef TASK_H
-#define	TASK_H
+#define TASK_H
 
 #include <QObject>
 #include <QPointer>
 #include <QMap>
+
+// 在Qt 6中，QRegularExpression替代了QRegExp
+#include <QRegularExpression>
 
 #include <Session.h>
 #include <ScreenWindow.h>
@@ -38,7 +41,8 @@ class HistorySearch : public QObject
     Q_OBJECT
 
 public:
-    explicit HistorySearch(EmulationPtr emulation, QRegExp regExp, bool forwards,
+    // 将 QRegExp 替换为 QRegularExpression
+    explicit HistorySearch(EmulationPtr emulation, QRegularExpression regExp, bool forwards,
                            int startColumn, int startLine, QObject* parent);
 
     ~HistorySearch();
@@ -53,9 +57,8 @@ private:
     bool search(int startColumn, int startLine, int endColumn, int endLine);
     int findLineNumberInString(QList<int> linePositions, int position);
 
-
     EmulationPtr m_emulation;
-    QRegExp m_regExp;
+    QRegularExpression m_regExp;  // 使用 QRegularExpression 替换 QRegExp
     bool m_forwards;
     int m_startColumn;
     int m_startLine;
@@ -67,4 +70,3 @@ private:
 };
 
 #endif	/* TASK_H */
-

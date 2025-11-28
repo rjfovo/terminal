@@ -22,6 +22,7 @@
 
 #include <QTranslator>
 #include <QWidget>
+#include <QString>
 #include "Emulation.h"
 #include "Filter.h"
 
@@ -101,7 +102,8 @@ public:
     void setArgs(const QStringList & args);
 
     //Text codec, default is UTF-8
-    void setTextCodec(QTextCodec * codec);
+    // Qt6中QTextCodec已被移除，使用字符串指定编码名称
+    void setTextCodec(const QString &codecName);
 
     /** @brief Sets the color scheme, default is white on black
      *
@@ -324,4 +326,3 @@ extern "C"
 void * createTermWidget(int startnow, void * parent);
 
 #endif
-

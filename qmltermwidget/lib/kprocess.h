@@ -77,7 +77,7 @@ public:
     /**
      * Constructor
      */
-    explicit KProcess(QObject *parent = 0);
+    explicit KProcess(QObject *parent = nullptr);
 
     /**
      * Destructor
@@ -335,14 +335,15 @@ protected:
     KProcessPrivate * const d_ptr;
 
 private:
-    // hide those
-    using QProcess::setReadChannelMode;
-    using QProcess::readChannelMode;
+    // hide those - these methods were removed in Qt6
+    // using QProcess::setReadChannelMode;
+    // using QProcess::readChannelMode;
     using QProcess::setProcessChannelMode;
     using QProcess::processChannelMode;
 
-    Q_PRIVATE_SLOT(d_func(), void _k_forwardStdout())
-    Q_PRIVATE_SLOT(d_func(), void _k_forwardStderr())
+private Q_SLOTS:
+    void _k_forwardStdout();
+    void _k_forwardStderr();
 };
 
 /* ----------- kprocess_p.h ---------------- */
@@ -372,4 +373,3 @@ protected:
 };
 /* ------------------------------------------- */
 #endif
-

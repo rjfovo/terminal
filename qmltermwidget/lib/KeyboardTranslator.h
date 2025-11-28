@@ -29,6 +29,9 @@
 #include <QMetaType>
 #include <QVarLengthArray>
 
+// 在Qt 6中，QRegularExpression替代了QRegExp
+#include <QRegularExpression>
+
 // Konsole
 //#include "konsole_export.h"
 #define KONSOLEPRIVATE_EXPORT
@@ -589,4 +592,3 @@ Q_DECLARE_METATYPE(Konsole::KeyboardTranslator::Entry)
 Q_DECLARE_METATYPE(const Konsole::KeyboardTranslator*)
 
 #endif // KEYBOARDTRANSLATOR_H
-

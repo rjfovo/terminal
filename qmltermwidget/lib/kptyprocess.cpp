@@ -46,6 +46,11 @@ KPtyProcess::KPtyProcess(QObject *parent) :
     d->pty->open();
     connect(this, SIGNAL(stateChanged(QProcess::ProcessState)),
             SLOT(_k_onStateChanged(QProcess::ProcessState)));
+
+    // 使用 Qt6 的新 API 设置子进程修改器
+    setChildProcessModifier([this]() {
+        setupChildProcessLogic();
+    });
 }
 
 KPtyProcess::KPtyProcess(int ptyMasterFd, QObject *parent) :
@@ -57,6 +62,11 @@ KPtyProcess::KPtyProcess(int ptyMasterFd, QObject *parent) :
     d->pty->open(ptyMasterFd);
     connect(this, SIGNAL(stateChanged(QProcess::ProcessState)),
             SLOT(_k_onStateChanged(QProcess::ProcessState)));
+
+    // 使用 Qt6 的新 API 设置子进程修改器
+    setChildProcessModifier([this]() {
+        setupChildProcessLogic();
+    });
 }
 
 KPtyProcess::~KPtyProcess()
@@ -119,7 +129,7 @@ KPtyDevice *KPtyProcess::pty() const
     return d->pty;
 }
 
-void KPtyProcess::setupChildProcess()
+void KPtyProcess::setupChildProcessLogic()
 {
     Q_D(KPtyProcess);
 
@@ -138,7 +148,7 @@ void KPtyProcess::setupChildProcess()
     if (d->ptyChannels & StderrChannel)
         dup2(d->pty->slaveFd(), 2);
 
-    KProcess::setupChildProcess();
+    // 注意：在 Qt6 中，我们不能再调用 KProcess::setupChildProcess()
+    // 因为它在 Qt6 中也会遇到同样的问题
+    // 如果 KProcess 也需要适配 Qt6，它应该使用同样的方法
 }
-
-//#include "kptyprocess.moc"

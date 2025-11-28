@@ -27,6 +27,12 @@
 
 #include <QStringList>
 #include <QWidget>
+#include <QTimer>
+#include <QColor>
+#include <QSize>
+#include <QList>
+#include <QHash>
+#include <QObject>
 
 #include "Emulation.h"
 #include "History.h"
@@ -72,7 +78,7 @@ public:
      * falls back to using the program specified in the SHELL environment
      * variable.
      */
-    Session(QObject* parent = 0);
+    explicit Session(QObject* parent = nullptr);
     virtual ~Session();
 
     /**
@@ -348,8 +354,13 @@ public:
      */
     void setSize(const QSize & size);
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     /** Sets the text codec used by this session's terminal emulation. */
     void setCodec(QTextCodec * codec);
+#else
+    // QTextCodec was removed in Qt 6, use QStringConverter instead
+    void setCodec(const QString &codecName);
+#endif
 
     /**
      * Sets whether the session has a dark background or not.  The session

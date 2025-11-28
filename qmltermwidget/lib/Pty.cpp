@@ -270,6 +270,11 @@ void Pty::init()
 
   connect(pty(), SIGNAL(readyRead()) , this , SLOT(dataReceived()));
   setPtyChannels(KPtyProcess::AllChannels);
+
+  // 使用 Qt6 的新 API 设置子进程修改器
+  setChildProcessModifier([this]() {
+      setupChildProcessLogic();
+  });
 }
 
 Pty::~Pty()
@@ -317,10 +322,8 @@ int Pty::foregroundProcessGroup() const
     return 0;
 }
 
-void Pty::setupChildProcess()
+void Pty::setupChildProcessLogic()
 {
-    KPtyProcess::setupChildProcess();
-
     // reset all signal handlers
     // this ensures that terminal applications respond to
     // signals generated via key sequences such as Ctrl+C
