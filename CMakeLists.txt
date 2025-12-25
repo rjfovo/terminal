@@ -1,23 +1,41 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(PROJECT_NAME cutefish-terminal)
-project(${PROJECT_NAME} LANGUAGES CXX)
+project(cutefish-terminal LANGUAGES CXX)
 
+# -------------------------------------------------
+# CMake / Qt 基础设置
+# -------------------------------------------------
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+include(GNUInstallDirs)
+
+# -------------------------------------------------
 # Qt6 modules
+# -------------------------------------------------
 find_package(Qt6 REQUIRED COMPONENTS
-    Core Gui Quick QuickControls2 Widgets DBus LinguistTools
+    Core
+    Gui
+    Quick
+    QuickControls2
+    Widgets
+    DBus
+    LinguistTools
 )
 
-# Qt6 QML install directory
-get_target_property(QT_QML_DIR Qt6::Core QT_INSTALL_QML)
-message(STATUS "Qt6 QML dir: ${QT_QML_DIR}")
+# -------------------------------------------------
+# Qt6 QML install directory（正确方式）
+# -------------------------------------------------
+set(QT_QML_DIR "${CMAKE_INSTALL_LIBDIR}/qt6/qml")
+message(STATUS "Qt6 QML install dir: ${QT_QML_DIR}")
 
+# -------------------------------------------------
+# Sources
+# -------------------------------------------------
 set(SRCS
     src/main.cpp
     src/processhelper.h
@@ -30,10 +48,14 @@ set(RESOURCES
     src/resources.qrc
 )
 
-# Subdirectory
+# -------------------------------------------------
+# Subdirectories (QML modules / plugins)
+# -------------------------------------------------
 add_subdirectory(qmltermwidget)
 
-# Main executable -------------------------------------
+# -------------------------------------------------
+# Main executable
+# -------------------------------------------------
 add_executable(${PROJECT_NAME}
     ${SRCS}
     ${RESOURCES}
@@ -48,7 +70,9 @@ target_link_libraries(${PROJECT_NAME}
     Qt6::DBus
 )
 
-# --------------------- Translations ---------------------
+# -------------------------------------------------
+# Translations
+# -------------------------------------------------
 file(GLOB TS_FILES translations/*.ts)
 
 qt_add_translations(${PROJECT_NAME}
@@ -60,13 +84,14 @@ install(FILES ${QM_FILES}
     DESTINATION /usr/share/cutefish-terminal/translations
 )
 
-# --------------------- Install binary ---------------------
+# -------------------------------------------------
+# Install binary & desktop file
+# -------------------------------------------------
 install(TARGETS ${PROJECT_NAME}
-    RUNTIME DESTINATION /usr/bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 install(FILES
     cutefish-terminal.desktop
-    DESTINATION /usr/share/applications/
-    COMPONENT Runtime
+    DESTINATION /usr/share/applications
 )

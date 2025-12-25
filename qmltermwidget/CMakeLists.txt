@@ -1,9 +1,26 @@
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR} lib src
+cmake_minimum_required(VERSION 3.16)
+
+project(cutefishqmltermwidget LANGUAGES CXX)
+
+include(GNUInstallDirs)
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# -------------------------------------------------
+# Qt6
+# -------------------------------------------------
+find_package(Qt6 REQUIRED COMPONENTS
+    Core
+    Gui
+    Quick
+    Widgets
 )
 
-add_definitions(-DHAVE_POSIX_OPENPT -DHAVE_SYS_TIME_H)
-
+# -------------------------------------------------
+# Sources
+# -------------------------------------------------
 set(TERMWIDGET_SRCS
     lib/BlockArray.h
     lib/CharacterColor.h
@@ -65,8 +82,22 @@ set(TERMWIDGET_SRCS
     src/qmltermwidget_plugin.cpp
 )
 
+# -------------------------------------------------
+# QML plugin (MODULE)
+# -------------------------------------------------
 add_library(cutefishqmltermwidget MODULE
     ${TERMWIDGET_SRCS}
+)
+
+target_include_directories(cutefishqmltermwidget PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+target_compile_definitions(cutefishqmltermwidget PRIVATE
+    HAVE_POSIX_OPENPT
+    HAVE_SYS_TIME_H
 )
 
 target_link_libraries(cutefishqmltermwidget
@@ -76,13 +107,16 @@ target_link_libraries(cutefishqmltermwidget
     Qt6::Widgets
 )
 
-# Qt6 QML install path
-if(NOT QT_QML_DIR)
-    get_target_property(QT_QML_DIR Qt6::Core QT_INSTALL_QML)
-endif()
+# -------------------------------------------------
+# Qt6 QML install path (正确方式)
+# -------------------------------------------------
+set(QT_QML_DIR "${CMAKE_INSTALL_LIBDIR}/qt6/qml")
 
+# -------------------------------------------------
+# Install
+# -------------------------------------------------
 install(TARGETS cutefishqmltermwidget
-    DESTINATION ${QT_QML_DIR}/Cutefish/TermWidget
+    LIBRARY DESTINATION ${QT_QML_DIR}/Cutefish/TermWidget
 )
 
 install(FILES src/qmldir

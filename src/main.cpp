@@ -55,6 +55,8 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("Fonts", new Fonts);
 
     engine.addImportPath(QStringLiteral("qrc:/"));
+    engine.addImportPath(QStringLiteral("/usr/share/qml"));
+    engine.addImportPath(QStringLiteral("/usr/share/qml/QtQuick/Controls.2"));
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
 
     return app.exec();
