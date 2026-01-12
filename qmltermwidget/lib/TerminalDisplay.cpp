@@ -343,6 +343,8 @@ TerminalDisplay::TerminalDisplay(QQuickItem *parent)
     // so the layout is forced to Left-To-Right
     //setLayoutDirection(Qt::LeftToRight);
 
+    qDebug() << "TerminalDisplay::TerminalDisplay() constructed - object=" << this;
+
     // The offsets are not yet calculated.
     // Do not calculate these too often to be more smoothly when resizing
     // konsole in opaque mode.
@@ -389,6 +391,9 @@ TerminalDisplay::TerminalDisplay(QQuickItem *parent)
     // TODO Forcing rendering to Framebuffer. We need to determine if this is ok
     // always or if we need to make this customizable.
     setRenderTarget(QQuickPaintedItem::FramebufferObject);
+
+    // Try to call QML-visible report method once shortly after construction
+    QTimer::singleShot(700, this, &TerminalDisplay::doReportQmlState);
 }
 
 TerminalDisplay::~TerminalDisplay()
@@ -401,6 +406,11 @@ TerminalDisplay::~TerminalDisplay()
 
     delete _outputSuspendedLabel;
     delete _filterChain;
+}
+
+void TerminalDisplay::doReportQmlState()
+{
+    reportQmlState();
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1050,6 +1060,8 @@ void TerminalDisplay::updateImage()
   if ( !m_screenWindow )
       return;
 
+    qDebug() << "TerminalDisplay::updateImage() called";
+
   // TODO QMLTermWidget at the moment I'm disabling this.
   // Since this can't be scrolled we need to determine if this
   // is useful or not.
@@ -1070,6 +1082,8 @@ void TerminalDisplay::updateImage()
   Character* const newimg = m_screenWindow->getImage();
   int lines = m_screenWindow->windowLines();
   int columns = m_screenWindow->windowColumns();
+
+    qDebug() << "TerminalDisplay::updateImage(): lines=" << lines << " columns=" << columns << " currentLine=" << m_screenWindow->currentLine();
 
   setScroll( m_screenWindow->currentLine() , m_screenWindow->lineCount() );
 
@@ -2319,6 +2333,7 @@ void TerminalDisplay::updateLineProperties()
     if ( !m_screenWindow )
         return;
 
+    qDebug() << "TerminalDisplay::updateLineProperties() called windowLines=" << m_screenWindow->windowLines();
     _lineProperties = m_screenWindow->getLineProperties();
 }
 
@@ -3264,6 +3279,17 @@ void TerminalDisplay::setSession(KSession * session)
 KSession* TerminalDisplay::getSession()
 {
     return m_session;
+}
+
+void TerminalDisplay::reportQmlState()
+{
+    qDebug() << "TerminalDisplay::reportQmlState:" \
+             << "lines=" << _lines \
+             << "columns=" << _columns \
+             << "windowLines=" << (m_screenWindow ? m_screenWindow->windowLines() : 0) \
+             << "selectedText=" << selectedText() \
+             << "scrollbarValue=" << getScrollbarValue() \
+             << "sessionTitle=" << (m_session ? m_session->getTitle() : QString("(null)"));
 }
 
 QStringList TerminalDisplay::availableColorSchemes()

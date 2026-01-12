@@ -272,6 +272,7 @@ void ScreenWindow::selectAll()
 
 void ScreenWindow::notifyOutputChanged()
 {
+    qDebug() << "ScreenWindow::notifyOutputChanged(): currentLine=" << _currentLine << "trackOutput=" << _trackOutput;
     // move window to the bottom of the screen and update scroll count
     // if this window is currently tracking the bottom of the screen
     if ( _trackOutput )

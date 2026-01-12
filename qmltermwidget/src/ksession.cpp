@@ -25,6 +25,7 @@
 
 // Qt
 #include <QDir>
+#include <QKeyEvent>
 
 // Konsole
 #include "KeyboardTranslator.h"
@@ -244,15 +245,13 @@ void KSession::sendKey(int rep, int key, int mod) const
     Q_UNUSED(key);
     Q_UNUSED(mod);
 
-    //TODO implement or remove this function.
-//    Qt::KeyboardModifier kbm = Qt::KeyboardModifier(mod);
+    // Forward key events from QML to the backend emulation
+    Qt::KeyboardModifiers kbm = static_cast<Qt::KeyboardModifiers>(mod);
+    QKeyEvent qkey(QEvent::KeyPress, key, kbm);
 
-//    QKeyEvent qkey(QEvent::KeyPress, key, kbm);
-
-//    while (rep > 0){
-//        m_session->sendKey(&qkey);
-//        --rep;
-    //    }
+    if (m_session && m_session->emulation()) {
+        m_session->emulation()->sendKeyEvent(&qkey);
+    }
 }
 
 void KSession::clearScreen()

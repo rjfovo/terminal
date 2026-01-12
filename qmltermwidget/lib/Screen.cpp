@@ -33,6 +33,7 @@
 // Qt
 #include <QTextStream>
 #include <QDate>
+#include <QtDebug>
 
 // KDE
 //#include <kdebug.h>
@@ -646,6 +647,7 @@ void Screen::checkSelection(int from, int to)
 
 void Screen::displayCharacter(wchar_t c)
 {
+    qDebug() << "Screen::displayCharacter(): char=" << QChar(c) << "code=" << static_cast<int>(c);
     // Note that VT100 does wrapping BEFORE putting the character.
     // This has impact on the assumption of valid cursor positions.
     // We indicate the fact that a newline has to be triggered by

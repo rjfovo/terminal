@@ -53,6 +53,7 @@ Page {
     }
 
     onKeyPressed: {
+        console.warn("Terminal.qml:onKeyPressed key", event.key, "modifiers", event.modifiers, "accepted", event.accepted)
         if ((event.key === Qt.Key_A)
                 && (event.modifiers & Qt.ControlModifier)
                 && (event.modifiers & Qt.ShiftModifier)) {
@@ -103,6 +104,12 @@ Page {
             root.visibility = root.isFullScreen ? Window.Windowed : Window.FullScreen
             event.accepted = true
         }
+
+        // 未被特殊处理的按键，转发到终端会话（确保命令输入传递给子进程）
+        if (!event.accepted) {
+            _session.sendKey(1, event.key, event.modifiers)
+            event.accepted = true
+        }
     }
 
     QMLTermWidget {
@@ -117,6 +124,21 @@ Page {
 
         Keys.enabled: true
         Keys.onPressed: control.keyPressed(event)
+
+        Timer {
+            id: reportTimer
+            interval: 700
+            running: false
+            repeat: true
+            property int attempts: 0
+            property int maxAttempts: 5
+            parent: _terminal
+            onTriggered: {
+                attempts++
+                if (_terminal.reportQmlState) _terminal.reportQmlState()
+                if (attempts >= maxAttempts) reportTimer.stop()
+            }
+        }
 
         session: QMLTermSession {
             id: _session
@@ -169,8 +191,50 @@ Page {
         }
 
         Component.onCompleted: {
+            console.warn("Terminal.qml:Component.onCompleted - starting shell. terminal.lines=", _terminal.lines, "columns=", _terminal.columns)
             _session.startShellProgram()
             _terminal.forceActiveFocus()
+            reportTimer.start()
+        }
+    }
+
+    Connections {
+        target: _terminal
+        onLinesChanged: {
+            console.warn("Terminal.qml:_terminal.lines changed", _terminal.lines)
+            if (_terminal.reportQmlState) _terminal.reportQmlState()
+        }
+        onColumnsChanged: {
+            console.warn("Terminal.qml:_terminal.columns changed", _terminal.columns)
+            if (_terminal.reportQmlState) _terminal.reportQmlState()
+        }
+        onWindowLinesChanged: {
+            console.warn("Terminal.qml:_terminal.windowLines changed", _terminal.windowLines)
+            if (_terminal.reportQmlState) _terminal.reportQmlState()
+        }
+        onSelectedTextChanged: {
+            console.warn("Terminal.qml:_terminal.selectedText changed", _terminal.selectedText)
+            if (_terminal.reportQmlState) _terminal.reportQmlState()
+        }
+        onScrollbarCurrentValueChanged: {
+            console.warn("Terminal.qml:_terminal.scrollbarCurrentValue changed", _terminal.scrollbarCurrentValue)
+            if (_terminal.reportQmlState) _terminal.reportQmlState()
+        }
+    }
+
+    Connections {
+        target: _session
+        onTitleChanged: {
+            console.warn("Terminal.qml:_session.title changed", _session.title)
+            if (_terminal.reportQmlState) _terminal.reportQmlState()
+        }
+        onCurrentDirChanged: {
+            console.warn("Terminal.qml:_session.currentDir changed", _session.currentDir)
+            if (_terminal.reportQmlState) _terminal.reportQmlState()
+        }
+        onFinished: {
+            console.warn("Terminal.qml:_session finished")
+            if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
     }
 

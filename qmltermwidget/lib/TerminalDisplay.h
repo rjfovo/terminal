@@ -104,6 +104,9 @@ public:
     explicit TerminalDisplay(QQuickItem *parent = nullptr);
     ~TerminalDisplay() override;
 
+public:
+    void doReportQmlState();
+
     /** Returns the terminal color palette used by the display. */
     const ColorEntry *colorTable() const;
     /** Sets the terminal color palette used by the display. */
@@ -136,8 +139,6 @@ public:
         /** Show the scroll bar on the right side of the display. */
         ScrollBarRight=2 
     };
-    /** 
-
     /** Sets the background image of the terminal display. */
     void setBackgroundImage(QString backgroundImage);
 
@@ -913,6 +914,8 @@ private:
 
     void setSession(KSession *session);
     KSession *getSession();
+
+    Q_INVOKABLE void reportQmlState();
 
     QSize getTerminalSize();
 

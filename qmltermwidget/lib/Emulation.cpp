@@ -220,6 +220,8 @@ void Emulation::receiveData(const char* text, int length)
     emit stateSet(NOTIFYACTIVITY);
     bufferedUpdate();
 
+  qDebug() << "Emulation::receiveData(): len=" << length << "preview=" << QByteArray::fromRawData(text, length).left(64);
+
     if (!_decoder) {
         return;
     }

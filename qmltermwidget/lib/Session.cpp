@@ -332,6 +332,8 @@ void Session::run()
                                       windowId(),
                                       _addToUtmp);
 
+    qDebug() << "Session::run(): starting program:" << exec << "args:" << arguments << "result:" << result;
+
     if (result < 0) {
         qDebug() << "CRASHED! result: " << result;
         return;
@@ -921,6 +923,8 @@ void Session::zmodemFinished()
 */
 void Session::onReceiveBlock( const char * buf, int len )
 {
+    QByteArray ba(buf, len);
+    qDebug() << "Session::onReceiveBlock(): len=" << len << "preview=" << ba.left(64);
     _emulation->receiveData( buf, len );
     emit receivedData( QString::fromLatin1( buf, len ) );
 }

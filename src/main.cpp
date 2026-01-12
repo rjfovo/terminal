@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QLocale>
@@ -32,7 +32,7 @@
 int main(int argc, char *argv[])
 {
     // Qt6中高DPI支持通常是自动的，移除已弃用的属性设置
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
     app.setOrganizationName("cutefishos");
     app.setWindowIcon(QIcon::fromTheme("terminal"));
 
@@ -42,9 +42,9 @@ int main(int argc, char *argv[])
     QLocale locale;
     QString qmFilePath = QString("%1/%2.qm").arg("/usr/share/cutefish-terminal/translations/").arg(locale.name());
     if (QFile::exists(qmFilePath)) {
-        QTranslator *translator = new QTranslator(QGuiApplication::instance());
+        QTranslator *translator = new QTranslator(QApplication::instance());
         if (translator->load(qmFilePath)) {
-            QGuiApplication::installTranslator(translator);
+            QApplication::installTranslator(translator);
         } else {
             translator->deleteLater();
         }

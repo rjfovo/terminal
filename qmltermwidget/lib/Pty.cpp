@@ -215,6 +215,8 @@ int Pty::start(const QString& program,
   if (!waitForStarted())
       return -1;
 
+  qDebug() << "Pty::start(): started, tty=" << pty()->ttyName() << " masterFd=" << pty()->masterFd();
+
   return 0;
 }
 
@@ -296,7 +298,8 @@ void Pty::sendData(const char* data, int length)
 void Pty::dataReceived()
 {
      QByteArray data = pty()->readAll();
-    emit receivedData(data.constData(),data.count());
+  qDebug() << "Pty::dataReceived(): len=" << data.size() << "dataPreview=" << data.left(64);
+  emit receivedData(data.constData(),data.count());
 }
 
 void Pty::lockPty(bool lock)
