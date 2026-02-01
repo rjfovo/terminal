@@ -23,7 +23,7 @@ import QtQuick.Controls 6.0
 import QtQuick.Layouts 6.0
 import Qt5Compat.GraphicalEffects 6.0
 
-import Cutefish.TermWidget 1.0
+import cutefish.TermWidget 1.0
 import FishUI 1.0 as FishUI
 
 FishUI.Window {

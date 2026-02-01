@@ -24,7 +24,7 @@ import QtQuick.Layouts 6.0
 import QtQuick.Window 6.0
 
 import FishUI 1.0 as FishUI
-import Cutefish.TermWidget 1.0
+import cutefish.TermWidget 1.0
 
 Page {
     id: control
