@@ -23,7 +23,7 @@ import QtQuick.Controls 6.0
 import QtQuick.Layouts 6.0
 import Qt5Compat.GraphicalEffects 6.0
 
-import cutefish.TermWidget 1.0
+import Cutefish.TermWidget 1.0
 import FishUI 1.0 as FishUI
 
 FishUI.Window {
@@ -189,14 +189,25 @@ FishUI.Window {
     }
 
     function openTab(path) {
-        if (_tabView.contentModel.count > 7)
+        console.warn("main.qml:openTab called with path=", path)
+        if (_tabView.contentModel.count > 7) {
+            console.warn("main.qml:openTab - too many tabs, returning")
             return
+        }
 
         const component = Qt.createComponent("Terminal.qml");
+        console.warn("main.qml:openTab - component status=", component.status, "errorString=", component.errorString())
         if (component.status === Component.Ready) {
+            console.warn("main.qml:openTab - creating terminal tab")
             const index = _tabView.contentModel.count
             const object = _tabView.addTab(component, {path: path})
-            object.terminalClosed.connect(() => closeTab(index))
+            console.warn("main.qml:openTab - tab created, object exists:", object !== null)
+            if (object) {
+                object.terminalClosed.connect(() => closeTab(index))
+                console.warn("main.qml:openTab - terminalClosed signal connected")
+            }
+        } else {
+            console.warn("main.qml:openTab - component not ready!")
         }
     }
 

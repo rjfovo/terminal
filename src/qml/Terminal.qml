@@ -24,7 +24,7 @@ import QtQuick.Layouts 6.0
 import QtQuick.Window 6.0
 
 import FishUI 1.0 as FishUI
-import cutefish.TermWidget 1.0
+import Cutefish.TermWidget 1.0
 
 Page {
     id: control
@@ -53,7 +53,6 @@ Page {
     }
 
     onKeyPressed: {
-        console.warn("Terminal.qml:onKeyPressed key", event.key, "modifiers", event.modifiers, "accepted", event.accepted)
         if ((event.key === Qt.Key_A)
                 && (event.modifiers & Qt.ControlModifier)
                 && (event.modifiers & Qt.ShiftModifier)) {
@@ -107,7 +106,44 @@ Page {
 
         // 未被特殊处理的按键，转发到终端会话（确保命令输入传递给子进程）
         if (!event.accepted) {
-            _session.sendKey(1, event.key, event.modifiers)
+            // 处理特殊功能键
+            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                _session.sendText("\r")
+            } else if (event.key === Qt.Key_Backspace) {
+                _session.sendText("\x7f") // ASCII DEL
+            } else if (event.key === Qt.Key_Tab) {
+                _session.sendText("\t")
+            } else if (event.key === Qt.Key_Escape) {
+                _session.sendText("\x1b")
+            } else if (event.key === Qt.Key_Up) {
+                _session.sendText("\x1b[A")
+            } else if (event.key === Qt.Key_Down) {
+                _session.sendText("\x1b[B")
+            } else if (event.key === Qt.Key_Right) {
+                _session.sendText("\x1b[C")
+            } else if (event.key === Qt.Key_Left) {
+                _session.sendText("\x1b[D")
+            } else if (event.key === Qt.Key_Home) {
+                _session.sendText("\x1b[H")
+            } else if (event.key === Qt.Key_End) {
+                _session.sendText("\x1b[F")
+            } else if (event.key === Qt.Key_Delete) {
+                _session.sendText("\x1b[3~")
+            } else if (event.key === Qt.Key_Insert) {
+                _session.sendText("\x1b[2~")
+            } else if (event.key === Qt.Key_PageUp) {
+                _session.sendText("\x1b[5~")
+            } else if (event.key === Qt.Key_PageDown) {
+                _session.sendText("\x1b[6~")
+            }
+            // 对于字符键，使用sendText发送文本
+            else if (event.text && event.text.length > 0) {
+                _session.sendText(event.text)
+            }
+            // 对于其他键，使用sendKey（可能由_keyTranslator处理）
+            else {
+                _session.sendKey(1, event.key, event.modifiers)
+            }
             event.accepted = true
         }
     }
@@ -189,35 +225,29 @@ Page {
                 // control.clicked()
             }
         }
+    }
 
-        Component.onCompleted: {
-            console.warn("Terminal.qml:Component.onCompleted - starting shell. terminal.lines=", _terminal.lines, "columns=", _terminal.columns)
-            _session.startShellProgram()
-            _terminal.forceActiveFocus()
-            reportTimer.start()
-        }
+    Component.onCompleted: {
+        _session.startShellProgram()
+        _terminal.forceActiveFocus()
+        reportTimer.start()
     }
 
     Connections {
         target: _terminal
         onLinesChanged: {
-            console.warn("Terminal.qml:_terminal.lines changed", _terminal.lines)
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
         onColumnsChanged: {
-            console.warn("Terminal.qml:_terminal.columns changed", _terminal.columns)
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
         onWindowLinesChanged: {
-            console.warn("Terminal.qml:_terminal.windowLines changed", _terminal.windowLines)
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
         onSelectedTextChanged: {
-            console.warn("Terminal.qml:_terminal.selectedText changed", _terminal.selectedText)
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
         onScrollbarCurrentValueChanged: {
-            console.warn("Terminal.qml:_terminal.scrollbarCurrentValue changed", _terminal.scrollbarCurrentValue)
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
     }
@@ -225,15 +255,12 @@ Page {
     Connections {
         target: _session
         onTitleChanged: {
-            console.warn("Terminal.qml:_session.title changed", _session.title)
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
         onCurrentDirChanged: {
-            console.warn("Terminal.qml:_session.currentDir changed", _session.currentDir)
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
         onFinished: {
-            console.warn("Terminal.qml:_session finished")
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
     }

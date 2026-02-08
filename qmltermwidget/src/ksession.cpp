@@ -236,21 +236,32 @@ QString KSession::getHistory() const
 
 void KSession::sendText(QString text)
 {
+    qDebug() << "KSession::sendText: text='" << text << "' length=" << text.length();
     m_session->sendText(text);
 }
 
 void KSession::sendKey(int rep, int key, int mod) const
 {
     Q_UNUSED(rep);
-    Q_UNUSED(key);
-    Q_UNUSED(mod);
-
+    
+    qDebug() << "KSession::sendKey: key=" << key << " mod=" << mod;
+    
     // Forward key events from QML to the backend emulation
     Qt::KeyboardModifiers kbm = static_cast<Qt::KeyboardModifiers>(mod);
-    QKeyEvent qkey(QEvent::KeyPress, key, kbm);
+    
+    // 在Qt6中，QKeyEvent构造函数需要文本参数
+    // 对于功能键（如方向键、回车键等），文本为空
+    // 注意：字符键的文本应该通过sendText发送，而不是通过sendKey
+    QString text; // 空文本，因为字符键应该使用sendText
+    
+    // 创建QKeyEvent
+    // Qt6中QKeyEvent的构造函数：QKeyEvent(Type type, int key, Qt::KeyboardModifiers modifiers, const QString &text = QString())
+    QKeyEvent qkey(QEvent::KeyPress, key, kbm, text);
 
     if (m_session && m_session->emulation()) {
         m_session->emulation()->sendKeyEvent(&qkey);
+    } else {
+        qDebug() << "KSession::sendKey: m_session or emulation is null!";
     }
 }
 
