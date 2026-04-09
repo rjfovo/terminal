@@ -177,7 +177,16 @@ FishUI.Window {
     }
 
     Component.onCompleted: {
-        openTab("$PWD")
+        // 获取当前工作目录
+        var cwd = Qt.application.arguments.length > 1 ? Qt.application.arguments[1] : ""
+        if (!cwd) {
+            // 尝试从环境变量获取
+            cwd = Qt.application.workingDirectory || ""
+        }
+        if (!cwd) {
+            cwd = "$HOME"
+        }
+        openTab(cwd)
     }
 
     function openNewTab() {

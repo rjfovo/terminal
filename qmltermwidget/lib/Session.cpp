@@ -36,6 +36,7 @@
 #include <QStringList>
 #include <QFile>
 #include <QtDebug>
+#include <QMetaObject>
 
 #include "Pty.h"
 //#include "kptyprocess.h"
@@ -226,8 +227,8 @@ void Session::addView(TerminalDisplay * widget)
 
     QObject::connect( widget ,SIGNAL(destroyed(QObject *)) , this ,
                       SLOT(viewDestroyed(QObject *)) );
-//slot for close
-    QObject::connect(this, SIGNAL(finished()), widget, SLOT(close()));
+//slot for close - disabled in Qt6 because TerminalDisplay::close() is not a real slot
+    // QObject::connect(this, SIGNAL(finished()), widget, SLOT(close()));
 
 }
 
@@ -338,6 +339,13 @@ void Session::run()
         qDebug() << "CRASHED! result: " << result;
         return;
     }
+
+    // Diagnostic: write a test string to the started shell to verify PTY input path.
+    // If the shell is responsive, it should output the marker which will appear
+    // in the emulation receiveData() logs.
+    const char *diag = "echo __CUTEFISH_READY__\n";
+    _shellProcess->sendData(diag, static_cast<int>(strlen(diag)));
+
 
     _shellProcess->setWriteable(false);  // We are reachable via kwrited.
     emit started();
@@ -926,6 +934,14 @@ void Session::onReceiveBlock( const char * buf, int len )
     QByteArray ba(buf, len);
     qDebug() << "Session::onReceiveBlock(): len=" << len << "preview=" << ba.left(64);
     _emulation->receiveData( buf, len );
+    // Force an immediate update of any attached views.  This helps when
+    // the QML scene timing prevents the normal outputChanged -> updateImage
+    // path from triggering a visible repaint promptly.
+    for (TerminalDisplay* view : _views) {
+        if (view) {
+            QMetaObject::invokeMethod(view, "updateImage", Qt::QueuedConnection);
+        }
+    }
     emit receivedData( QString::fromLatin1( buf, len ) );
 }
 

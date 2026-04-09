@@ -101,7 +101,7 @@ class TerminalDisplay : public QQuickPaintedItem
 
 public:
     /** Constructs a new terminal display widget with the specified parent. */
-    explicit TerminalDisplay(QQuickItem *parent = nullptr);
+    Q_INVOKABLE explicit TerminalDisplay(QQuickItem *parent = nullptr);
     ~TerminalDisplay() override;
 
 public:
@@ -362,6 +362,7 @@ public:
     bool selectedText();
 
     Q_INVOKABLE void selectAll();
+    Q_INVOKABLE void forceActiveFocus();
 
     /**
      * Reimplemented.  Has no effect.  Use setVTFont() to change the font
@@ -480,6 +481,11 @@ public slots:
      * display.
      */
     void pasteSelection();
+
+    /**
+     * Close the terminal display (used by Session when finished).
+     */
+    Q_SLOT void close();
 
     /**
        * Changes whether the flow control warning box should be shown when the flow control

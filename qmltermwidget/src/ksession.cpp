@@ -78,9 +78,28 @@ Session *KSession::createSession(QString name)
 
     //session->setProgram();
 
-    QStringList args("");
+    QStringList args;
+    // 使用 -i 参数启动 bash，确保是交互模式
+    // 但避免使用 --login，因为它会读取 .bashrc 可能导致阻塞
+    if (shellProg.contains("bash")) {
+        args << "-i";
+    }
     session->setArguments(args);
     session->setAutoClose(true);
+    
+    // 设置必要的环境变量以确保 shell 正常工作
+    QStringList env = session->environment();
+    // 设置 HOME 环境变量
+    env << "HOME=" + QString::fromLocal8Bit(getenv("HOME"));
+    // 设置 USER 环境变量
+    env << "USER=" + QString::fromLocal8Bit(getenv("USER"));
+    // 设置 PATH 环境变量
+    env << "PATH=" + QString::fromLocal8Bit(getenv("PATH"));
+    // 设置 TERM 环境变量已经在上面设置了
+    // 设置 ENV 和 BASH_ENV 为空，避免额外的初始化文件
+    env << "ENV=";
+    env << "BASH_ENV=";
+    session->setEnvironment(env);
 
     // Qt6 中 QTextCodec 已被移除，使用默认编码
     // session->setCodec(QTextCodec::codecForName("UTF-8"));

@@ -52,7 +52,7 @@ Page {
             _session.sendText(urls[i].replace("file://", "") + " ")
     }
 
-    onKeyPressed: {
+    onKeyPressed: function(event) {
         if ((event.key === Qt.Key_A)
                 && (event.modifiers & Qt.ControlModifier)
                 && (event.modifiers & Qt.ShiftModifier)) {
@@ -137,6 +137,7 @@ Page {
                 _session.sendText("\x1b[6~")
             }
             // 对于字符键，使用sendText发送文本
+            // 在Qt6中，event.text可能为空，所以我们需要检查event.key是否是可打印字符
             else if (event.text && event.text.length > 0) {
                 _session.sendText(event.text)
             }
@@ -159,7 +160,9 @@ Page {
         backgroundOpacity: 0
 
         Keys.enabled: true
-        Keys.onPressed: control.keyPressed(event)
+        Keys.onPressed: function(event) {
+            control.keyPressed(event)
+        }
 
         Timer {
             id: reportTimer
@@ -168,7 +171,6 @@ Page {
             repeat: true
             property int attempts: 0
             property int maxAttempts: 5
-            parent: _terminal
             onTriggered: {
                 attempts++
                 if (_terminal.reportQmlState) _terminal.reportQmlState()
@@ -188,12 +190,12 @@ Page {
             cursorShape: _terminal.terminalUsesMouse ? Qt.ArrowCursor : Qt.IBeamCursor
             acceptedButtons:  Qt.RightButton | Qt.LeftButton
 
-            onDoubleClicked: {
+            onDoubleClicked: function(mouse) {
                  var coord = correctDistortion(mouse.x, mouse.y)
                  _terminal.simulateMouseDoubleClick(coord.x, coord.y, mouse.button, mouse.buttons, mouse.modifiers)
             }
 
-            onPressed: {
+            onPressed: function(mouse) {
                 if ((!_terminal.terminalUsesMouse || mouse.modifiers & Qt.ShiftModifier)
                         && mouse.button == Qt.RightButton) {
                     updateMenu()
@@ -204,17 +206,17 @@ Page {
                 }
             }
 
-            onReleased: {
+            onReleased: function(mouse) {
                 var coord = correctDistortion(mouse.x, mouse.y)
                 _terminal.simulateMouseRelease(coord.x, coord.y, mouse.button, mouse.buttons, mouse.modifiers)
             }
 
-            onPositionChanged: {
+            onPositionChanged: function(mouse) {
                 var coord = correctDistortion(mouse.x, mouse.y)
                 _terminal.simulateMouseMove(coord.x, coord.y, mouse.button, mouse.buttons, mouse.modifiers)
             }
 
-            onClicked: {
+            onClicked: function(mouse) {
                 if (mouse.button === Qt.RightButton) {
                     updateMenu()
                     terminalMenu.open()
@@ -227,40 +229,58 @@ Page {
         }
     }
 
+    Timer {
+        id: _startShellTimer
+        interval: 100
+        running: false
+        repeat: true
+        property int attempts: 0
+        property int maxAttempts: 50
+        onTriggered: {
+            attempts++
+            if (_terminal && _terminal.lines && _terminal.columns && _terminal.lines > 1 && _terminal.columns > 1) {
+                console.log("Terminal.qml: Terminal ready, starting shell")
+                _session.startShellProgram()
+                _terminal.forceActiveFocus()
+                reportTimer.start()
+                stop()
+            } else if (attempts >= maxAttempts) {
+                console.log("Terminal.qml: Terminal not ready after attempts, starting shell fallback")
+                _session.startShellProgram()
+                _terminal.forceActiveFocus()
+                reportTimer.start()
+                stop()
+            }
+        }
+    }
+
     Component.onCompleted: {
-        _session.startShellProgram()
-        _terminal.forceActiveFocus()
-        reportTimer.start()
+        console.log("Terminal.qml: Component.onCompleted, path=", control.path)
+        console.log("Terminal.qml: Scheduling shell start when terminal is ready")
+        _startShellTimer.start()
     }
 
     Connections {
         target: _terminal
-        onLinesChanged: {
+        function onLinesChanged() {
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
-        onColumnsChanged: {
+        function onColumnsChanged() {
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
-        onWindowLinesChanged: {
-            if (_terminal.reportQmlState) _terminal.reportQmlState()
-        }
-        onSelectedTextChanged: {
-            if (_terminal.reportQmlState) _terminal.reportQmlState()
-        }
-        onScrollbarCurrentValueChanged: {
+        // 移除不存在的信号：onWindowLinesChanged, onSelectedTextChanged
+        function onScrollbarCurrentValueChanged() {
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
     }
 
     Connections {
         target: _session
-        onTitleChanged: {
+        function onTitleChanged() {
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
-        onCurrentDirChanged: {
-            if (_terminal.reportQmlState) _terminal.reportQmlState()
-        }
-        onFinished: {
+        // 移除不存在的信号：onCurrentDirChanged
+        function onFinished() {
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
     }

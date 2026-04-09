@@ -127,7 +127,10 @@ void TerminalDisplay::setScreenWindow(ScreenWindow* window)
         connect( m_screenWindow , SIGNAL(outputChanged()) , this , SLOT(updateImage()) );
         //connect( m_screenWindow , SIGNAL(outputChanged()) , this , SLOT(updateFilters()) );
         //connect( m_screenWindow , SIGNAL(scrolled(int)) , this , SLOT(updateFilters()) );
-        window->setWindowLines(_lines);
+        
+        // 确保使用合理的默认值，而不是可能为1的值
+        int linesToSet = (_lines < 10) ? 80 : _lines;
+        window->setWindowLines(linesToSet);
     }
 }
 
@@ -292,10 +295,10 @@ TerminalDisplay::TerminalDisplay(QQuickItem *parent)
   , _fontWidth(1)
   , _fontAscent(1)
   , _boldIntense(true)
-  , _lines(1)
-  , _columns(1)
-  , _usedLines(1)
-  , _usedColumns(1)
+  , _lines(80)  // 设置合理的默认值，而不是1
+  , _columns(24) // 设置合理的默认值，而不是1
+  , _usedLines(80)
+  , _usedColumns(24)
   , _contentHeight(1)
   , _contentWidth(1)
   , _image(0)
@@ -343,7 +346,23 @@ TerminalDisplay::TerminalDisplay(QQuickItem *parent)
     // so the layout is forced to Left-To-Right
     //setLayoutDirection(Qt::LeftToRight);
 
-    qDebug() << "TerminalDisplay::TerminalDisplay() constructed - object=" << this;
+    qDebug() << "TerminalDisplay::TerminalDisplay() constructed - object=" << this << "parent=" << parent;
+
+    // 在 Qt6 的 QQuickPaintedItem 中，必须设置初始的 width 和 height
+    // 否则对象不会被正确放置到图形场景中
+    // 使用合理的默认尺寸：24列 * 字体宽度 + 边距，80行 * 字体高度 + 边距
+    int defaultWidth = 2 * _leftBaseMargin + (24 * _fontWidth);
+    int defaultHeight = 2 * _topBaseMargin + (80 * _fontHeight);
+    setWidth(defaultWidth);
+    setHeight(defaultHeight);
+
+    // 如果父对象存在，确保我们被正确添加到场景中
+    if (parent) {
+        // 确保我们的父对象知道我们有内容
+        setParentItem(parent);
+    } else {
+        qWarning() << "TerminalDisplay created without parent! This may cause 'not placed in graphics scene' error.";
+    }
 
     // The offsets are not yet calculated.
     // Do not calculate these too often to be more smoothly when resizing
@@ -394,6 +413,20 @@ TerminalDisplay::TerminalDisplay(QQuickItem *parent)
 
     // Try to call QML-visible report method once shortly after construction
     QTimer::singleShot(700, this, &TerminalDisplay::doReportQmlState);
+    
+    // 强制触发初始绘制
+    // 在 Qt6 中，QQuickPaintedItem 可能需要显式调用 update() 来触发首次绘制
+    QTimer::singleShot(100, this, [this]() {
+        if (isVisible() && width() > 0 && height() > 0) {
+            update();
+            qDebug() << "TerminalDisplay: Forced initial update() called";
+        }
+    });
+    
+    // 在 Qt6 的 QQuickPaintedItem 中，必须设置 fillColor 以确保对象被正确渲染
+    // 使用默认的背景颜色
+    setFillColor(_colorTable[DEFAULT_BACK_COLOR].color);
+    qDebug() << "TerminalDisplay: Set fillColor to" << _colorTable[DEFAULT_BACK_COLOR].color;
 }
 
 TerminalDisplay::~TerminalDisplay()
@@ -816,10 +849,17 @@ void TerminalDisplay::drawCharacters(QPainter& painter,
     const CharacterColor& textColor = ( invertCharacterColor ? style->backgroundColor : style->foregroundColor );
     const QColor color = textColor.color(_colorTable);
     QPen pen = painter.pen();
-    if ( pen.color() != color )
+    QColor effectiveColor = color;
+    if (qEnvironmentVariableIsSet("CUTEFISH_TERMINAL_FORCEFG") &&
+        qEnvironmentVariableIntValue("CUTEFISH_TERMINAL_FORCEFG") == 1) {
+        effectiveColor = QColor(Qt::black);
+        qDebug() << "drawCharacters: forcing foreground color to" << effectiveColor;
+    }
+
+    if ( pen.color() != effectiveColor )
     {
-        pen.setColor(color);
-        painter.setPen(color);
+        pen.setColor(effectiveColor);
+        painter.setPen(effectiveColor);
     }
 
     // draw text
@@ -851,6 +891,15 @@ void TerminalDisplay::drawTextFragment(QPainter& painter ,
     // setup painter
     const QColor foregroundColor = style->foregroundColor.color(_colorTable);
     const QColor backgroundColor = style->backgroundColor.color(_colorTable);
+
+    // Diagnostic logging: show fragment text and resolved colors
+    if (qEnvironmentVariableIsSet("CUTEFISH_TERMINAL_COLDBG") &&
+        qEnvironmentVariableIntValue("CUTEFISH_TERMINAL_COLDBG") == 1) {
+        QString txt = QString::fromStdWString(text);
+        if (txt.length() > 64) txt = txt.left(64);
+        qDebug() << "drawTextFragment: textPreview=" << txt
+                 << " fg=" << foregroundColor << " bg=" << backgroundColor;
+    }
 
     // draw background if different from the display's background color
     if ( backgroundColor != palette().window().color() )
@@ -1346,9 +1395,32 @@ void TerminalDisplay::focusInEvent(QFocusEvent*)
 
 void TerminalDisplay::paint(QPainter *painter)
 {
+    qDebug() << "TerminalDisplay::paint() called - width:" << width() << "height:" << height() 
+             << "clipRect:" << painter->clipBoundingRect() << "isVisible:" << isVisible();
+    
     QRect clipRect = painter->clipBoundingRect().toAlignedRect();
     QRect dirtyRect = clipRect.isValid() ? clipRect : contentsRect();
+    
+    qDebug() << "TerminalDisplay::paint() - dirtyRect:" << dirtyRect;
+    
     drawContents(*painter, dirtyRect);
+    
+    // Visual diagnostic: when environment variable CUTEFISH_TERMINAL_DRAWDBG=1
+    // is set, draw a small semi-transparent red square and label to verify
+    // that QQuickPaintedItem painting is visible on screen.
+    if (qEnvironmentVariableIsSet("CUTEFISH_TERMINAL_DRAWDBG") &&
+        qEnvironmentVariableIntValue("CUTEFISH_TERMINAL_DRAWDBG") == 1) {
+        painter->save();
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(QColor(255,0,0,120));
+        painter->drawRect(2, 2, 18, 18);
+        painter->setPen(Qt::black);
+        painter->drawText(24, 14, QStringLiteral("DBG"));
+        painter->restore();
+        qDebug() << "TerminalDisplay::paint() - drew debug marker";
+    }
+
+    qDebug() << "TerminalDisplay::paint() - finished";
 }
 
 QPoint TerminalDisplay::cursorPosition() const
@@ -2980,39 +3052,58 @@ void TerminalDisplay::clearImage()
 
 void TerminalDisplay::calcGeometry()
 {
-  _scrollBar->resize(_scrollBar->sizeHint().width(), contentsRect().height());
-  int scrollBarWidth = _scrollBar->style()->styleHint(QStyle::SH_ScrollBar_Transient, nullptr, _scrollBar)
-                       ? 0 : _scrollBar->width();
-  switch(_scrollbarLocation)
-  {
-    case QTermWidget::NoScrollBar :
-     _leftMargin = _leftBaseMargin;
-     _contentWidth = contentsRect().width() - 2 * _leftBaseMargin;
-     break;
-    case QTermWidget::ScrollBarLeft :
-     _leftMargin = _leftBaseMargin + scrollBarWidth;
-     _contentWidth = contentsRect().width() - 2 * _leftBaseMargin - scrollBarWidth;
-     _scrollBar->move(contentsRect().topLeft());
-     break;
-    case QTermWidget::ScrollBarRight:
-     _leftMargin = _leftBaseMargin;
-     _contentWidth = contentsRect().width()  - 2 * _leftBaseMargin - scrollBarWidth;
-     _scrollBar->move(contentsRect().topRight() - QPoint(_scrollBar->width()-1, 0));
-     break;
-  }
+  // 确保 contentsRect() 有合理的尺寸
+  QRect rect = contentsRect();
+  
+  // 如果尺寸太小，使用默认值
+  if (rect.width() < 10 || rect.height() < 10) {
+      // 使用构造函数中设置的默认值
+      _contentWidth = 24 * _fontWidth + 2 * _leftBaseMargin;
+      _contentHeight = 80 * _fontHeight + 2 * _topBaseMargin;
+      
+      // 确保 _lines 和 _columns 有合理的默认值，而不是1
+      if (!_isFixedSize)
+      {
+          _columns = qMax(24, _contentWidth / _fontWidth);
+          _lines = qMax(80, _contentHeight / _fontHeight);
+          _usedColumns = qMin(_usedColumns, _columns);
+          _usedLines = qMin(_usedLines, _lines);
+      }
+  } else {
+      _scrollBar->resize(_scrollBar->sizeHint().width(), rect.height());
+      int scrollBarWidth = _scrollBar->style()->styleHint(QStyle::SH_ScrollBar_Transient, nullptr, _scrollBar)
+                           ? 0 : _scrollBar->width();
+      switch(_scrollbarLocation)
+      {
+        case QTermWidget::NoScrollBar :
+         _leftMargin = _leftBaseMargin;
+         _contentWidth = rect.width() - 2 * _leftBaseMargin;
+         break;
+        case QTermWidget::ScrollBarLeft :
+         _leftMargin = _leftBaseMargin + scrollBarWidth;
+         _contentWidth = rect.width() - 2 * _leftBaseMargin - scrollBarWidth;
+         _scrollBar->move(rect.topLeft());
+         break;
+        case QTermWidget::ScrollBarRight:
+         _leftMargin = _leftBaseMargin;
+         _contentWidth = rect.width()  - 2 * _leftBaseMargin - scrollBarWidth;
+         _scrollBar->move(rect.topRight() - QPoint(_scrollBar->width()-1, 0));
+         break;
+      }
 
-  _topMargin = _topBaseMargin;
-  _contentHeight = contentsRect().height() - 2 * _topBaseMargin + /* mysterious */ 1;
+      _topMargin = _topBaseMargin;
+      _contentHeight = rect.height() - 2 * _topBaseMargin + /* mysterious */ 1;
 
-  if (!_isFixedSize)
-  {
-     // ensure that display is always at least one column wide
-     _columns = qMax(1,_contentWidth / _fontWidth);
-     _usedColumns = qMin(_usedColumns,_columns);
+      if (!_isFixedSize)
+      {
+         // ensure that display is always at least one column wide
+         _columns = qMax(1,_contentWidth / _fontWidth);
+         _usedColumns = qMin(_usedColumns,_columns);
 
-     // ensure that display is always at least one line high
-     _lines = qMax(1,_contentHeight / _fontHeight);
-     _usedLines = qMin(_usedLines,_lines);
+         // ensure that display is always at least one line high
+         _lines = qMax(1,_contentHeight / _fontHeight);
+         _usedLines = qMin(_usedLines,_lines);
+      }
   }
 }
 
@@ -3052,6 +3143,13 @@ void TerminalDisplay::setSize(int columns, int lines)
     //updateGeometry();
     //TODO Manage geometry change
 
+    // 在 Qt6 的 QQuickPaintedItem 中，必须设置 width 和 height 属性
+    // 否则对象不会被正确放置到图形场景中
+    setWidth(newSize.width());
+    setHeight(newSize.height());
+    
+    // 触发更新
+    update();
   }
 }
 
@@ -3424,6 +3522,25 @@ bool TerminalDisplay::fullCursorHeight() const
     return m_full_cursor_height;
 }
 
+void TerminalDisplay::close()
+{
+    // TerminalDisplay is a QQuickPaintedItem, not a QWidget
+    // In Qt6/QML context, we don't have a traditional close() method
+    // Instead, we can emit a signal or handle cleanup
+    
+    qDebug() << "TerminalDisplay::close() called";
+    
+    // If we have a session, we can try to close it
+    if (m_session) {
+        // We could potentially send a signal to the session to close
+        // but for now, just log that close was called
+    }
+    
+    // For QML items, we might want to deleteLater() or set visible false
+    // But since this is called from Session::finished() signal,
+    // we should just accept that the terminal session has ended
+}
+
 void TerminalDisplay::itemChange(ItemChange change, const ItemChangeData & value)
 {
     switch (change) {
@@ -3436,9 +3553,33 @@ void TerminalDisplay::itemChange(ItemChange change, const ItemChangeData & value
             }
         }
         break;
+    case QQuickItem::ItemParentHasChanged:
+        // 当父对象改变时，确保我们被正确添加到场景中
+        qDebug() << "TerminalDisplay::itemChange - Parent changed, parent=" << parentItem();
+        if (parentItem()) {
+            // 确保我们有有效的尺寸
+            if (width() <= 0 || height() <= 0) {
+                int defaultWidth = 2 * _leftBaseMargin + (24 * _fontWidth);
+                int defaultHeight = 2 * _topBaseMargin + (80 * _fontHeight);
+                setWidth(defaultWidth);
+                setHeight(defaultHeight);
+                qDebug() << "TerminalDisplay::itemChange - Set default size:" << defaultWidth << "x" << defaultHeight;
+            }
+            // 触发更新以确保对象被正确绘制
+            update();
+        }
+        break;
     default:
         break;
     }
 
     QQuickPaintedItem::itemChange(change, value);
+}
+
+void TerminalDisplay::forceActiveFocus()
+{
+    // Request keyboard focus for this QQuickItem so it receives key events from QML
+    setFocus(true);
+    QQuickItem::forceActiveFocus();
+    qDebug() << "TerminalDisplay::forceActiveFocus called - hasFocus:" << hasActiveFocus();
 }
