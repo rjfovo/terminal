@@ -197,11 +197,18 @@ void Emulation::receiveChar(wchar_t c)
 
 void Emulation::sendKeyEvent(QKeyEvent* ev)
 {
+  qDebug() << "Emulation::sendKeyEvent: key=" << ev->key() << " text='" << ev->text() << "' modifiers=" << ev->modifiers();
   emit stateSet(NOTIFYNORMAL);
 
   if (!ev->text().isEmpty())
   {
-    emit sendData(ev->text().toUtf8().constData(), ev->text().length());
+    QByteArray data = ev->text().toUtf8();
+    qDebug() << "Emulation::sendKeyEvent: sending data len=" << data.length() << " hex=" << data.toHex();
+    emit sendData(data.constData(), data.length());
+  }
+  else
+  {
+    qDebug() << "Emulation::sendKeyEvent: text is empty, nothing to send";
   }
 }
 

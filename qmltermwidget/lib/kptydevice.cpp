@@ -33,6 +33,7 @@
 #include "kpty_p.h"
 
 #include <QSocketNotifier>
+#include <QtDebug>
 
 #include <unistd.h>
 #include <errno.h>
@@ -90,7 +91,12 @@ bool KPtyDevicePrivate::_k_canRead()
 #else
     int available;
 #endif
-    if (!::ioctl(q->masterFd(), PTY_BYTES_AVAILABLE, (char *) &available)) {
+    // 尝试使用 ioctl 获取可用字节数
+    bool ioctlSuccess = !::ioctl(q->masterFd(), PTY_BYTES_AVAILABLE, (char *) &available);
+    
+    qDebug() << "KPtyDevice::_k_canRead: masterFd=" << q->masterFd() << " ioctlSuccess=" << ioctlSuccess << " available=" << available;
+
+    if (ioctlSuccess) {
 #ifdef Q_OS_SOLARIS
         // A Pty is a STREAMS module, and those can be activated
         // with 0 bytes available. This happens either when ^C is
@@ -112,35 +118,54 @@ bool KPtyDevicePrivate::_k_canRead()
         }
 #endif
 
-        char *ptr = readBuffer.reserve(available);
+        // 只有当 available > 0 时才尝试读取
+        if (available > 0) {
+            char *ptr = readBuffer.reserve(available);
 #ifdef Q_OS_SOLARIS
-        // Even if available > 0, it is possible for read()
-        // to return 0 on Solaris, due to 0-byte writes in the stream.
-        // Ignore them and keep reading until we hit *some* data.
-        // In Solaris it is possible to have 15 bytes available
-        // and to (say) get 0, 0, 6, 0 and 9 bytes in subsequent reads.
-        // Because the stream is set to O_NONBLOCK in finishOpen(),
-        // an EOF read will return -1.
-        readBytes = 0;
-        while (!readBytes)
+            // Even if available > 0, it is possible for read()
+            // to return 0 on Solaris, due to 0-byte writes in the stream.
+            // Ignore them and keep reading until we hit *some* data.
+            // In Solaris it is possible to have 15 bytes available
+            // and to (say) get 0, 0, 6, 0 and 9 bytes in subsequent reads.
+            // Because the stream is set to O_NONBLOCK in finishOpen(),
+            // an EOF read will return -1.
+            readBytes = 0;
+            while (!readBytes)
 #endif
-        // Useless block braces except in Solaris
-        {
-          NO_INTR(readBytes, read(q->masterFd(), ptr, available));
+            // Useless block braces except in Solaris
+            {
+              NO_INTR(readBytes, read(q->masterFd(), ptr, available));
+            }
+            if (readBytes < 0) {
+                readBuffer.unreserve(available);
+                q->setErrorString(QLatin1String("Error reading from PTY"));
+                return false;
+            }
+            readBuffer.unreserve(available - readBytes); // *should* be a no-op
         }
-        if (readBytes < 0) {
-            readBuffer.unreserve(available);
-            q->setErrorString(QLatin1String("Error reading from PTY"));
-            return false;
+    } else {
+        // ioctl 失败时，尝试直接读取（使用 4096 字节的缓冲区）
+        // 这在某些 Qt6 环境下可能发生
+        qDebug() << "KPtyDevice::_k_canRead: ioctl failed, errno=" << errno << " falling back to direct read";
+        char buf[4096];
+        NO_INTR(readBytes, read(q->masterFd(), buf, sizeof(buf)));
+        qDebug() << "KPtyDevice::_k_canRead: direct read returned" << readBytes << "errno=" << errno;
+        if (readBytes > 0) {
+            char *ptr = readBuffer.reserve(readBytes);
+            memcpy(ptr, buf, readBytes);
+        } else if (readBytes < 0) {
+            // 读取错误，但不要禁用 readNotifier，因为可能是暂时性错误
+            // 只有在 EAGAIN/EWOULDBLOCK 时才不是真正的错误
+            if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                q->setErrorString(QLatin1String("Error reading from PTY"));
+                return false;
+            }
+            return true;
         }
-        readBuffer.unreserve(available - readBytes); // *should* be a no-op
     }
 
-    if (!readBytes) {
-        readNotifier->setEnabled(false);
-        emit q->readEof();
-        return false;
-    } else {
+    if (readBytes > 0) {
+        qDebug() << "KPtyDevice::_k_canRead: readBytes=" << readBytes << " emitting readyRead";
         if (!emittedReadyRead) {
             emittedReadyRead = true;
             emit q->readyRead();
@@ -148,6 +173,11 @@ bool KPtyDevicePrivate::_k_canRead()
         }
         return true;
     }
+    
+    qDebug() << "KPtyDevice::_k_canRead: no data read, returning true (keeping notifier enabled)";
+    // 没有数据可读，但不要禁用 readNotifier
+    // 这样当新数据到达时，QSocketNotifier 会再次触发
+    return true;
 }
 
 bool KPtyDevicePrivate::_k_canWrite()

@@ -53,100 +53,227 @@ Page {
     }
 
     onKeyPressed: function(event) {
+        // 日志：记录所有按键事件
+        console.log("Terminal.qml: onKeyPressed key=" + event.key + " text='" + event.text + "' modifiers=" + event.modifiers + " keyName=" + Qt.platform.os)
+
+        // 处理所有按键事件
+        var handled = false
+
+        // 快捷键处理（优先于普通按键）
         if ((event.key === Qt.Key_A)
                 && (event.modifiers & Qt.ControlModifier)
                 && (event.modifiers & Qt.ShiftModifier)) {
+            console.log("Terminal.qml: Ctrl+Shift+A -> selectAll")
             _terminal.selectAll()
-            event.accepted = true
+            handled = true
         }
 
         if ((event.key === Qt.Key_C)
                 && (event.modifiers & Qt.ControlModifier)
                 && (event.modifiers & Qt.ShiftModifier)) {
+            console.log("Terminal.qml: Ctrl+Shift+C -> copy")
             _copyAction.trigger()
-            event.accepted = true
+            handled = true
         }
 
         if ((event.key === Qt.Key_V)
                 && (event.modifiers & Qt.ControlModifier)
                 && (event.modifiers & Qt.ShiftModifier)) {
+            console.log("Terminal.qml: Ctrl+Shift+V -> paste")
             _pasteAction.trigger()
-            event.accepted = true
+            handled = true
         }
 
         if ((event.key === Qt.Key_Q)
                 && (event.modifiers & Qt.ControlModifier)
                 && (event.modifiers & Qt.ShiftModifier)) {
+            console.log("Terminal.qml: Ctrl+Shift+Q -> quit")
             Qt.quit()
+            handled = true
         }
 
         if ((event.key === Qt.Key_T)
                 && (event.modifiers & Qt.ControlModifier)
                 && (event.modifiers & Qt.ShiftModifier)) {
+            console.log("Terminal.qml: Ctrl+Shift+T -> newTab")
             root.openNewTab()
-            event.accepted = true
+            handled = true
         }
 
         if ((event.key === Qt.Key_W)
                 && (event.modifiers & Qt.ControlModifier)
                 && (event.modifiers & Qt.ShiftModifier)) {
+            console.log("Terminal.qml: Ctrl+Shift+W -> closeTab")
             root.closeCurrentTab()
-            event.accepted = true
+            handled = true
         }
 
         if (event.key === Qt.Key_Tab && event.modifiers & Qt.ControlModifier) {
+            console.log("Terminal.qml: Ctrl+Tab -> toggleTab")
             root.toggleTab()
-            event.accepted = true
+            handled = true
         }
 
         if (event.key === Qt.Key_F11) {
+            console.log("Terminal.qml: F11 -> toggleFullScreen")
             root.visibility = root.isFullScreen ? Window.Windowed : Window.FullScreen
-            event.accepted = true
+            handled = true
         }
 
-        // 未被特殊处理的按键，转发到终端会话（确保命令输入传递给子进程）
-        if (!event.accepted) {
-            // 处理特殊功能键
-            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                _session.sendText("\r")
-            } else if (event.key === Qt.Key_Backspace) {
-                _session.sendText("\x7f") // ASCII DEL
-            } else if (event.key === Qt.Key_Tab) {
-                _session.sendText("\t")
-            } else if (event.key === Qt.Key_Escape) {
-                _session.sendText("\x1b")
-            } else if (event.key === Qt.Key_Up) {
-                _session.sendText("\x1b[A")
-            } else if (event.key === Qt.Key_Down) {
-                _session.sendText("\x1b[B")
-            } else if (event.key === Qt.Key_Right) {
-                _session.sendText("\x1b[C")
-            } else if (event.key === Qt.Key_Left) {
-                _session.sendText("\x1b[D")
-            } else if (event.key === Qt.Key_Home) {
-                _session.sendText("\x1b[H")
-            } else if (event.key === Qt.Key_End) {
-                _session.sendText("\x1b[F")
-            } else if (event.key === Qt.Key_Delete) {
-                _session.sendText("\x1b[3~")
-            } else if (event.key === Qt.Key_Insert) {
-                _session.sendText("\x1b[2~")
-            } else if (event.key === Qt.Key_PageUp) {
-                _session.sendText("\x1b[5~")
-            } else if (event.key === Qt.Key_PageDown) {
-                _session.sendText("\x1b[6~")
-            }
-            // 对于字符键，使用sendText发送文本
-            // 在Qt6中，event.text可能为空，所以我们需要检查event.key是否是可打印字符
-            else if (event.text && event.text.length > 0) {
-                _session.sendText(event.text)
-            }
-            // 对于其他键，使用sendKey（可能由_keyTranslator处理）
-            else {
-                _session.sendKey(1, event.key, event.modifiers)
+        // 如果事件已被快捷键处理，阻止继续传播
+        if (handled) {
+            event.accepted = true
+            return
+        }
+
+        // 普通按键处理 - 发送到终端
+        // 注意：所有按键事件都通过 sendText/sendKey 发送到终端
+        // 因为 QML 的 Keys.onPressed 会拦截事件，不会传递到 C++ 层
+
+        // 回车键：发送 \n（换行符），而不是 \r（回车符）
+        // PTY 的 ONLCR 标志会将 \n 转换为 \r\n
+        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+            console.log("Terminal.qml: Enter -> sendText('\\n')")
+            _session.sendText("\n")
+            event.accepted = true
+            return
+        }
+
+        // 退格键
+        if (event.key === Qt.Key_Backspace) {
+            console.log("Terminal.qml: Backspace -> sendText('\\b')")
+            _session.sendText("\b")
+            event.accepted = true
+            return
+        }
+
+        // Tab 键
+        if (event.key === Qt.Key_Tab) {
+            console.log("Terminal.qml: Tab -> sendText('\\t')")
+            _session.sendText("\t")
+            event.accepted = true
+            return
+        }
+
+        // Escape 键
+        if (event.key === Qt.Key_Escape) {
+            console.log("Terminal.qml: Escape -> sendText('\\x1b')")
+            _session.sendText("\x1b")
+            event.accepted = true
+            return
+        }
+
+        // 方向键
+        if (event.key === Qt.Key_Up) {
+            console.log("Terminal.qml: Up -> sendText('\\x1b[A')")
+            _session.sendText("\x1b[A")
+            event.accepted = true
+            return
+        }
+        if (event.key === Qt.Key_Down) {
+            console.log("Terminal.qml: Down -> sendText('\\x1b[B')")
+            _session.sendText("\x1b[B")
+            event.accepted = true
+            return
+        }
+        if (event.key === Qt.Key_Right) {
+            console.log("Terminal.qml: Right -> sendText('\\x1b[C')")
+            _session.sendText("\x1b[C")
+            event.accepted = true
+            return
+        }
+        if (event.key === Qt.Key_Left) {
+            console.log("Terminal.qml: Left -> sendText('\\x1b[D')")
+            _session.sendText("\x1b[D")
+            event.accepted = true
+            return
+        }
+
+        // Home 键
+        if (event.key === Qt.Key_Home) {
+            console.log("Terminal.qml: Home -> sendText('\\x1b[H')")
+            _session.sendText("\x1b[H")
+            event.accepted = true
+            return
+        }
+
+        // End 键
+        if (event.key === Qt.Key_End) {
+            console.log("Terminal.qml: End -> sendText('\\x1b[F')")
+            _session.sendText("\x1b[F")
+            event.accepted = true
+            return
+        }
+
+        // Delete 键
+        if (event.key === Qt.Key_Delete) {
+            console.log("Terminal.qml: Delete -> sendText('\\x1b[3~')")
+            _session.sendText("\x1b[3~")
+            event.accepted = true
+            return
+        }
+
+        // PageUp / PageDown
+        if (event.key === Qt.Key_PageUp) {
+            console.log("Terminal.qml: PageUp -> sendText('\\x1b[5~')")
+            _session.sendText("\x1b[5~")
+            event.accepted = true
+            return
+        }
+        if (event.key === Qt.Key_PageDown) {
+            console.log("Terminal.qml: PageDown -> sendText('\\x1b[6~')")
+            _session.sendText("\x1b[6~")
+            event.accepted = true
+            return
+        }
+
+        // Insert 键
+        if (event.key === Qt.Key_Insert) {
+            console.log("Terminal.qml: Insert -> sendText('\\x1b[2~')")
+            _session.sendText("\x1b[2~")
+            event.accepted = true
+            return
+        }
+
+        // F1-F12 功能键
+        if (event.key >= Qt.Key_F1 && event.key <= Qt.Key_F12) {
+            var fKeys = ["\x1bOP", "\x1bOQ", "\x1bOR", "\x1bOS",
+                         "\x1b[15~", "\x1b[17~", "\x1b[18~", "\x1b[19~",
+                         "\x1b[20~", "\x1b[21~", "\x1b[23~", "\x1b[24~"]
+            var index = event.key - Qt.Key_F1
+            if (index >= 0 && index < fKeys.length) {
+                console.log("Terminal.qml: F" + (index+1) + " -> sendText('" + fKeys[index] + "')")
+                _session.sendText(fKeys[index])
             }
             event.accepted = true
+            return
         }
+
+        // Ctrl+字母键（发送控制字符）
+        if (event.modifiers & Qt.ControlModifier && !(event.modifiers & Qt.AltModifier) && !(event.modifiers & Qt.ShiftModifier)) {
+            var ctrlKey = event.key
+            // 处理 Ctrl+A 到 Ctrl+Z
+            if (ctrlKey >= Qt.Key_A && ctrlKey <= Qt.Key_Z) {
+                var ctrlChar = String.fromCharCode(ctrlKey - Qt.Key_A + 1)
+                console.log("Terminal.qml: Ctrl+" + String.fromCharCode(ctrlKey) + " -> sendText(ctrlChar=" + (ctrlKey - Qt.Key_A + 1) + ")")
+                _session.sendText(ctrlChar)
+                event.accepted = true
+                return
+            }
+        }
+
+        // 普通字符键：如果有文本，发送文本
+        if (event.text && event.text.length > 0) {
+            console.log("Terminal.qml: char text='" + event.text + "' -> sendText")
+            _session.sendText(event.text)
+            event.accepted = true
+            return
+        }
+
+        // 其他未处理的按键，通过 sendKey 发送
+        console.log("Terminal.qml: unhandled key=" + event.key + " -> sendKey")
+        _session.sendKey(1, event.key, event.modifiers)
+        event.accepted = true
     }
 
     QMLTermWidget {
@@ -223,8 +350,6 @@ Page {
                 } else if(mouse.button === Qt.LeftButton) {
                     _terminal.forceActiveFocus()
                 }
-
-                // control.clicked()
             }
         }
     }
@@ -268,7 +393,6 @@ Page {
         function onColumnsChanged() {
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
-        // 移除不存在的信号：onWindowLinesChanged, onSelectedTextChanged
         function onScrollbarCurrentValueChanged() {
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
@@ -279,7 +403,6 @@ Page {
         function onTitleChanged() {
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }
-        // 移除不存在的信号：onCurrentDirChanged
         function onFinished() {
             if (_terminal.reportQmlState) _terminal.reportQmlState()
         }

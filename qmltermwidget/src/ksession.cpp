@@ -255,7 +255,17 @@ QString KSession::getHistory() const
 
 void KSession::sendText(QString text)
 {
-    qDebug() << "KSession::sendText: text='" << text << "' length=" << text.length();
+    // 将不可打印字符转换为可读形式
+    QString debugText;
+    for (int i = 0; i < text.length(); i++) {
+        QChar c = text.at(i);
+        if (c.unicode() < 32) {
+            debugText += QString("\\x%1").arg(c.unicode(), 2, 16, QChar('0'));
+        } else {
+            debugText += c;
+        }
+    }
+    qDebug() << "KSession::sendText: text='" << debugText << "' length=" << text.length() << " raw='" << text << "'";
     m_session->sendText(text);
 }
 
@@ -335,16 +345,31 @@ QString KSession::keyBindings()
 
 QString KSession::getTitle()
 {
-    if (m_session->currentDir() == QDir::homePath()) {
-        return m_session->currentDir();
+    // 首先尝试使用 shell 设置的标题（通过 OSC 转义序列）
+    QString userTitle = m_session->userTitle();
+    if (!userTitle.isEmpty()) {
+        return userTitle;
     }
 
-    if (m_session->currentDir() == "/")
-        return m_session->currentDir();
+    // 然后尝试使用 currentDir
+    QString currentDir = m_session->currentDir();
+    if (!currentDir.isEmpty()) {
+        if (currentDir == QDir::homePath()) {
+            return currentDir;
+        }
+        if (currentDir == "/")
+            return currentDir;
+        return QDir(currentDir).dirName();
+    }
 
-    return QDir(m_session->currentDir()).dirName();
+    // 如果 currentDir 为空，使用 nameTitle 作为后备
+    QString nameTitle = m_session->title(Konsole::Session::NameRole);
+    if (!nameTitle.isEmpty()) {
+        return nameTitle;
+    }
 
-    // return m_session->userTitle();
+    // 最后的后备
+    return QStringLiteral("Terminal");
 }
 
 bool KSession::hasActiveProcess() const

@@ -340,13 +340,6 @@ void Session::run()
         return;
     }
 
-    // Diagnostic: write a test string to the started shell to verify PTY input path.
-    // If the shell is responsive, it should output the marker which will appear
-    // in the emulation receiveData() logs.
-    const char *diag = "echo __CUTEFISH_READY__\n";
-    _shellProcess->sendData(diag, static_cast<int>(strlen(diag)));
-
-
     _shellProcess->setWriteable(false);  // We are reachable via kwrited.
     emit started();
 }
@@ -375,6 +368,10 @@ void Session::setUserTitle( int what, const QString & caption )
         _isTitleChanged = true;
         if ( _userTitle != caption ) {
             _userTitle = caption;
+            // 同时更新 _nameTitle，这样 QML 中 title 属性可以正确显示
+            if ( _nameTitle != caption ) {
+                _nameTitle = caption;
+            }
             modified = true;
         }
     }
@@ -982,9 +979,23 @@ QString Session::currentDir()
     QString path;
     if (updateForegroundProcessInfo()) {
         bool ok = false;
-        path= _foregroundProcessInfo->currentDir(&ok);
-        if (!ok)
+        path = _foregroundProcessInfo->currentDir(&ok);
+        if (!ok) {
+            // 如果前台进程的 currentDir 读取失败（例如 tcgetpgrp 返回 0），
+            // 尝试直接读取 shell 进程自身的 currentDir
             path.clear();
+            int shellPid = processId();
+            if (shellPid > 0) {
+                ProcessInfo* shellInfo = ProcessInfo::newInstance(shellPid);
+                if (shellInfo) {
+                    shellInfo->update();
+                    path = shellInfo->currentDir(&ok);
+                    if (!ok)
+                        path.clear();
+                    delete shellInfo;
+                }
+            }
+        }
     }
     return path;
 }

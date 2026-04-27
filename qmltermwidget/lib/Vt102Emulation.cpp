@@ -418,7 +418,7 @@ void Vt102Emulation::processWindowAttributeChange()
   QString newValue;
   newValue.reserve(tokenBufferPos-i-2);
   for (int j = 0; j < tokenBufferPos-i-2; j++)
-    newValue[j] = QChar(static_cast<ushort>(tokenBuffer[i+1+j]));
+    newValue += QChar(static_cast<ushort>(tokenBuffer[i+1+j]));
 
   _pendingTitleUpdates[attributeToChange] = newValue;
   _titleUpdateTimer->start(20);
@@ -1004,6 +1004,7 @@ void Vt102Emulation::focusGained(void)
 
 void Vt102Emulation::sendText( const QString& text )
 {
+  qDebug() << "Vt102Emulation::sendText: text='" << text << "' length=" << text.length();
   if (!text.isEmpty())
   {
     QKeyEvent event(QEvent::KeyPress,

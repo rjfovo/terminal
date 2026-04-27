@@ -288,11 +288,14 @@ void Pty::sendData(const char* data, int length)
   if (!length)
       return;
 
+  qDebug() << "Pty::sendData: len=" << length << " hex=" << QByteArray::fromRawData(data, length).toHex() << " preview='" << QByteArray::fromRawData(data, length).left(32) << "'";
+
   if (!pty()->write(data,length))
   {
     qWarning() << "Pty::doSendJobs - Could not send input data to terminal process.";
     return;
   }
+  qDebug() << "Pty::sendData: write successful";
 }
 
 void Pty::dataReceived()
@@ -327,6 +330,9 @@ int Pty::foregroundProcessGroup() const
 
 void Pty::setupChildProcessLogic()
 {
+    // 首先调用父类的 setupChildProcessLogic() 来设置控制终端和重定向 stdio
+    KPtyProcess::setupChildProcessLogic();
+
     // reset all signal handlers
     // this ensures that terminal applications respond to
     // signals generated via key sequences such as Ctrl+C

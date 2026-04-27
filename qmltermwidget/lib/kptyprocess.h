@@ -140,8 +140,8 @@ public:
      */
     KPtyDevice *pty() const;
 
-private:
-    // 私有方法，用于设置子进程的PTY
+protected:
+    // 保护方法，用于设置子进程的PTY，子类可以调用
     void setupChildProcessLogic();
 
 private:
