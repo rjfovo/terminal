@@ -4,45 +4,121 @@
 <context>
     <name>ExitPromptDialog</name>
     <message>
-        <location filename="../src/qml/ExitPromptDialog.qml" line="49"/>
         <source>Process is running, are you sure you want to quit?</source>
         <translation>Il processo è in corso, sei sicuro/a di voler uscire?</translation>
     </message>
     <message>
-        <location filename="../src/qml/ExitPromptDialog.qml" line="63"/>
         <source>OK</source>
         <translation>OK</translation>
     </message>
     <message>
-        <location filename="../src/qml/ExitPromptDialog.qml" line="57"/>
         <source>Cancel</source>
         <translation>Annulla</translation>
     </message>
 </context>
 <context>
+    <name>Konsole::Vt102Emulation</name>
+    <message>
+        <source>No keyboard translator available.  The information needed to convert key presses into characters to send to the terminal is missing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QObject</name>
+    <message>
+        <source>Un-named Color Scheme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accessible Color Scheme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy Link Address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send Email To...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy Email Address</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QTermWidget</name>
+    <message>
+        <source>Color Scheme Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot load color scheme: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SearchBar</name>
+    <message>
+        <source>SearchBar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Match case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Regular expression</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Highlight all matches</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SettingsDialog</name>
     <message>
-        <location filename="../src/qml/SettingsDialog.qml" line="10"/>
         <source>Settings</source>
         <translation>Impostazioni</translation>
     </message>
     <message>
-        <location filename="../src/qml/SettingsDialog.qml" line="39"/>
         <source>Font</source>
         <translation>Caratteri</translation>
     </message>
     <message>
-        <location filename="../src/qml/SettingsDialog.qml" line="63"/>
         <source>Font Size</source>
         <translation>Dimensione dei caratteri</translation>
     </message>
     <message>
-        <location filename="../src/qml/SettingsDialog.qml" line="82"/>
         <source>Transparency</source>
         <translation>Trasparenza</translation>
     </message>
     <message>
-        <location filename="../src/qml/SettingsDialog.qml" line="101"/>
         <source>Window Blur</source>
         <translation>Sfocatura della finestra</translation>
     </message>
@@ -50,30 +126,32 @@
 <context>
     <name>Terminal</name>
     <message>
-        <location filename="../src/qml/Terminal.qml" line="177"/>
         <source>Copy</source>
         <translation>Copia</translation>
     </message>
     <message>
-        <location filename="../src/qml/Terminal.qml" line="183"/>
-        <location filename="../src/qml/Terminal.qml" line="197"/>
         <source>Paste</source>
         <translation>Incolla</translation>
     </message>
     <message>
-        <location filename="../src/qml/Terminal.qml" line="203"/>
         <source>Select All</source>
         <translation>Seleziona tutto</translation>
     </message>
     <message>
-        <location filename="../src/qml/Terminal.qml" line="208"/>
         <source>Open File Manager</source>
         <translation>Apri il gestore di file</translation>
     </message>
     <message>
-        <location filename="../src/qml/Terminal.qml" line="213"/>
         <source>Settings</source>
         <translation>Impostazioni</translation>
+    </message>
+    <message>
+        <source>Exit full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

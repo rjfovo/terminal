@@ -4,45 +4,121 @@
 <context>
     <name>ExitPromptDialog</name>
     <message>
-        <location filename="../src/qml/ExitPromptDialog.qml" line="49"/>
         <source>Process is running, are you sure you want to quit?</source>
         <translation>Mbola mandeha ny processus,... tena hohidiana ve?</translation>
     </message>
     <message>
-        <location filename="../src/qml/ExitPromptDialog.qml" line="63"/>
         <source>OK</source>
         <translation>Mety</translation>
     </message>
     <message>
-        <location filename="../src/qml/ExitPromptDialog.qml" line="57"/>
         <source>Cancel</source>
         <translation>Ajanona</translation>
     </message>
 </context>
 <context>
+    <name>Konsole::Vt102Emulation</name>
+    <message>
+        <source>No keyboard translator available.  The information needed to convert key presses into characters to send to the terminal is missing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QObject</name>
+    <message>
+        <source>Un-named Color Scheme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accessible Color Scheme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy Link Address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send Email To...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy Email Address</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QTermWidget</name>
+    <message>
+        <source>Color Scheme Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot load color scheme: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SearchBar</name>
+    <message>
+        <source>SearchBar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Match case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Regular expression</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Highlight all matches</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SettingsDialog</name>
     <message>
-        <location filename="../src/qml/SettingsDialog.qml" line="10"/>
         <source>Settings</source>
         <translation>Fikirakirana</translation>
     </message>
     <message>
-        <location filename="../src/qml/SettingsDialog.qml" line="39"/>
         <source>Font</source>
         <translation>Karazan-tsoratra</translation>
     </message>
     <message>
-        <location filename="../src/qml/SettingsDialog.qml" line="63"/>
         <source>Font Size</source>
         <translation>Habean&apos;ireo karazan-tsoratra</translation>
     </message>
     <message>
-        <location filename="../src/qml/SettingsDialog.qml" line="82"/>
         <source>Transparency</source>
         <translation>Fahatanteraham-pahazavàvana</translation>
     </message>
     <message>
-        <location filename="../src/qml/SettingsDialog.qml" line="101"/>
         <source>Window Blur</source>
         <translation>Matroka</translation>
     </message>
@@ -50,38 +126,30 @@
 <context>
     <name>Terminal</name>
     <message>
-        <location filename="../src/qml/Terminal.qml" line="178"/>
         <source>Copy</source>
         <translation>Adika</translation>
     </message>
     <message>
-        <location filename="../src/qml/Terminal.qml" line="184"/>
-        <location filename="../src/qml/Terminal.qml" line="198"/>
         <source>Paste</source>
         <translation>Apetaka</translation>
     </message>
     <message>
-        <location filename="../src/qml/Terminal.qml" line="204"/>
         <source>Select All</source>
         <translation>Safidiana daholo</translation>
     </message>
     <message>
-        <location filename="../src/qml/Terminal.qml" line="209"/>
         <source>Open File Manager</source>
         <translation>Sokafana amin&apos;ny fikirakirana fichier</translation>
     </message>
     <message>
-        <location filename="../src/qml/Terminal.qml" line="214"/>
         <source>Exit full screen</source>
         <translation>Hialàna ny gros plan</translation>
     </message>
     <message>
-        <location filename="../src/qml/Terminal.qml" line="214"/>
         <source>Full screen</source>
         <translation>Gros plan</translation>
     </message>
     <message>
-        <location filename="../src/qml/Terminal.qml" line="221"/>
         <source>Settings</source>
         <translation>Fikirakirana</translation>
     </message>

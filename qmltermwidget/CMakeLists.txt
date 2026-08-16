@@ -98,6 +98,11 @@ target_include_directories(cutefishqmltermwidget PRIVATE
 target_compile_definitions(cutefishqmltermwidget PRIVATE
     HAVE_POSIX_OPENPT
     HAVE_SYS_TIME_H
+    # 屏蔽 qmltermwidget 里全部 qDebug 调试输出。
+    # 该库在 paint()/updateImage()/displayCharacter() 等高频路径上打日志，
+    # 终端每显示一个字符、每次重绘都写 stderr（重定向到 ~/.xsession-errors 文件），
+    # 磁盘 IO 拖死主线程，导致拉伸窗口时重绘跟不上而抖动。
+    QT_NO_DEBUG_OUTPUT
 )
 
 target_link_libraries(cutefishqmltermwidget
